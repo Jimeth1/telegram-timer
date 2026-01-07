@@ -12,7 +12,7 @@ from telegram.ext import (
     ContextTypes,
 )
 
-TOKEN = "8505282584:AAG6NZmyCntQXNeqoskSSS3Q4CyjnxJYK1I"
+TOKEN = ""
 
 active_timers = {}
 draft_settings = {}
@@ -235,3 +235,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
