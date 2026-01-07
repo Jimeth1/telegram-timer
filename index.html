@@ -1,89 +1,181 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<title>Таймер работы</title>
-<style>
-  body { font-family: sans-serif; text-align: center; padding: 20px; background: #f5f5f5; }
-  h2 { margin-bottom: 30px; }
-  .button { padding: 10px 20px; margin: 5px; font-size: 20px; cursor: pointer; }
-  .field { margin: 15px 0; font-size: 24px; }
-  .field span { font-weight: bold; }
-  button:active { background-color: #ddd; }
-</style>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta charset="UTF-8">
+    <title>Work Timer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial;
+            background: #0f172a;
+            color: #ffffff;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .block {
+            background: #1e293b;
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .label {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 6px;
+        }
+
+        .value {
+            font-size: 28px;
+            margin: 8px 0;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        button {
+            font-size: 18px;
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .plus {
+            background: #22c55e;
+            color: #000;
+        }
+
+        .minus {
+            background: #ef4444;
+            color: #000;
+        }
+
+        .start {
+            width: 100%;
+            font-size: 20px;
+            padding: 14px;
+            background: #38bdf8;
+            color: #000;
+            border-radius: 16px;
+            margin-top: 24px;
+        }
+    </style>
 </head>
 <body>
 
-<h2>Настрой таймер</h2>
+<h1>⏱ Work Timer</h1>
 
-<div class="field">
-  Работа: <span id="work">25</span> мин
-  <button class="button" onclick="change('work',1)">▲</button>
-  <button class="button" onclick="change('work',-1)">▼</button>
+<div class="block">
+    <div class="label">Минуты работы</div>
+    <div class="value" id="work">25</div>
+    <div class="buttons">
+        <button class="minus" onclick="change('work', -1)">−</button>
+        <button class="plus" onclick="change('work', 1)">+</button>
+    </div>
 </div>
 
-<div class="field">
-  Перерыв: <span id="break">5</span> мин
-  <button class="button" onclick="change('break',1)">▲</button>
-  <button class="button" onclick="change('break',-1)">▼</button>
+<div class="block">
+    <div class="label">Минуты перерыва</div>
+    <div class="value" id="break">5</div>
+    <div class="buttons">
+        <button class="minus" onclick="change('break', -1)">−</button>
+        <button class="plus" onclick="change('break', 1)">+</button>
+    </div>
 </div>
 
-<div class="field">
-  Всего: <span id="hours">5</span> ч
-  <button class="button" onclick="change('hours',1)">▲</button>
-  <button class="button" onclick="change('hours',-1)">▼</button>
+<div class="block">
+    <div class="label">Всего часов</div>
+    <div class="value" id="hours">5</div>
+    <div class="buttons">
+        <button class="minus" onclick="change('hours', -1)">−</button>
+        <button class="plus" onclick="change('hours', 1)">+</button>
+    </div>
 </div>
 
-<div class="field">
-  Старт: <span id="start">10:00</span>
-  <button class="button" onclick="changeTime(5)">▲</button>
-  <button class="button" onclick="changeTime(-5)">▼</button>
+<div class="block">
+    <div class="label">Время старта</div>
+    <div class="value" id="start">10:00</div>
+    <div class="buttons">
+        <button class="minus" onclick="changeTime(-5)">−</button>
+        <button class="plus" onclick="changeTime(5)">+</button>
+    </div>
 </div>
 
-<button class="button" style="font-size:24px; margin-top:30px;" onclick="startTimer()">✅ Start</button>
+<button class="start" onclick="startTimer()">▶️ Start</button>
+
+<!-- 🔥 КРИТИЧНО: Telegram SDK -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <script>
-  // Начальные значения
-  let work = 25;
-  let break_ = 5;
-  let hours = 5;
-  let startHour = 10;
-  let startMinute = 0;
+    const tg = window.Telegram.WebApp;
+    tg.expand();
 
-  // Инициализация Telegram Web App
-  const tg = window.Telegram.WebApp;
-  tg.expand();
+    let state = {
+        work: 25,
+        break: 5,
+        hours: 5,
+        startHour: 10,
+        startMinute: 0
+    };
 
-  // Изменение чисел работы, перерыва, часов
-  function change(field, delta) {
-      if(field === 'work') work = Math.max(1, work + delta);
-      if(field === 'break') break_ = Math.max(1, break_ + delta);
-      if(field === 'hours') hours = Math.max(1, hours + delta);
+    function updateUI() {
+        document.getElementById("work").innerText = state.work;
+        document.getElementById("break").innerText = state.break;
+        document.getElementById("hours").innerText = state.hours;
+        document.getElementById("start").innerText =
+            String(state.startHour).padStart(2, '0') + ':' +
+            String(state.startMinute).padStart(2, '0');
+    }
 
-      document.getElementById(field).innerText =
-          field === 'hours' ? hours : (field === 'work' ? work : break_);
-  }
+    function change(field, delta) {
+        state[field] = Math.max(1, state[field] + delta);
+        updateUI();
+    }
 
-  // Изменение времени старта
-  function changeTime(delta){
-      startMinute += delta;
-      if(startMinute >= 60){ startHour = (startHour + 1) % 24; startMinute -= 60; }
-      if(startMinute < 0){ startHour = (startHour - 1 + 24) % 24; startMinute += 60; }
-      document.getElementById('start').innerText =
-          `${String(startHour).padStart(2,'0')}:${String(startMinute).padStart(2,'0')}`;
-  }
+    function changeTime(delta) {
+        state.startMinute += delta;
 
-  // Отправка данных в бот
-  function startTimer(){
-      const payload = {
-          work: work,
-          break: break_,
-          hours: hours,
-          start: `${String(startHour).padStart(2,'0')}:${String(startMinute).padStart(2,'0')}`
-      };
-      tg.sendData(JSON.stringify(payload));
-  }
+        if (state.startMinute >= 60) {
+            state.startMinute -= 60;
+            state.startHour = (state.startHour + 1) % 24;
+        }
+
+        if (state.startMinute < 0) {
+            state.startMinute += 60;
+            state.startHour = (state.startHour - 1 + 24) % 24;
+        }
+
+        updateUI();
+    }
+
+    function startTimer() {
+        const payload = {
+            work: state.work,
+            break: state.break,
+            hours: state.hours,
+            start:
+                String(state.startHour).padStart(2, '0') + ':' +
+                String(state.startMinute).padStart(2, '0')
+        };
+
+        console.log("SEND:", payload);
+
+        tg.sendData(JSON.stringify(payload));
+    }
+
+    updateUI();
 </script>
 
 </body>
